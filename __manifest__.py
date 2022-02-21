@@ -3,8 +3,8 @@
     'version': '13.0.0.1.0',
     'author': 'JuanEmus',
     'depends': [
-        'stock',
         'purchase',
+        'purchase_stock',
     ],
     'data': [
         # security
@@ -12,6 +12,6 @@
         # demo
         # reports
         # views
-        'views/transito.xml',
+        'views/productostransito.xml',
     ],
 }
