@@ -8,6 +8,7 @@
         <field name="arch" type="xml">
             <xpath expr="//field[@name='price_unit']" position="after">
                 <field name="entransito"/>
+                <field name="cancelados"/>
             </xpath>
         </field>
     </record>

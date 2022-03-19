@@ -43,6 +43,12 @@ class Productostransito(models.Model):
         store = True,
     )
 
+    cancelados = fields.Float(
+        string = 'Cancelados',
+        compute = '_get_cancelados',
+        default = 0,
+    )
+
     @api.depends('move_ids')
     def _en_transito(self):
         for r in self:
@@ -94,12 +100,13 @@ class Productostransito(models.Model):
                     if move.state == 'done':
                         if move.location_dest_id.usage == "supplier":
                             if move.to_refund:
-                                total -= move.product_uom._compute_quantity(move.product_uom_qty, line.product_uom)
+                                total -= move.product_uom._compute_quantity(move.product_uom_qty, line.product_uom)  
                         elif move.origin_returned_move_id and move.origin_returned_move_id._is_dropshipped() and not move._is_dropshipped_returned():
                             # Edge case: the dropship is returned to the stock, no to the supplier.
                             # In this case, the received quantity on the PO is set although we didn't
                             # receive the product physically in our stock. To avoid counting the
                             # quantity twice, we do nothing.
+                            line.entransito_store = (line.product_qty - total) - line.cancelados
                             pass
                         elif (
                             move.location_dest_id.usage == "internal"
@@ -112,4 +119,11 @@ class Productostransito(models.Model):
                             total -= move.product_uom._compute_quantity(move.product_uom_qty, line.product_uom)
                         else:
                             total += move.product_uom._compute_quantity(move.product_uom_qty, line.product_uom)
-                        line.entransito_store = line.product_qty - total    
+                        line.entransito_store = (line.product_qty - total) - line.cancelados  
+
+    @api.depends('move_ids')
+    def _get_cancelados(self):
+        for record in self:
+            for m in record.move_ids:
+                tm = m.filtered(lambda x: x.state == 'cancel')
+                record.cancelados = sum(tm.mapped('product_uom_qty'))
