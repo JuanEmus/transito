@@ -106,7 +106,6 @@ class Productostransito(models.Model):
                             # In this case, the received quantity on the PO is set although we didn't
                             # receive the product physically in our stock. To avoid counting the
                             # quantity twice, we do nothing.
-                            line.entransito_store = (line.product_qty - total) - line.cancelados
                             pass
                         elif (
                             move.location_dest_id.usage == "internal"
@@ -127,3 +126,10 @@ class Productostransito(models.Model):
             for m in record.move_ids:
                 tm = m.filtered(lambda x: x.state == 'cancel')
                 record.cancelados = sum(tm.mapped('product_uom_qty'))
+
+    # @api.depends('cancelados')
+    # @api.onchange('cancelados')
+    # def _set_cancelados(self):
+    #     for record in self:
+    #         if record.cancelados != 0 and record.order_id.picking_count == 1:
+    #             record.entransito_store = record.entransito_store - record.cancelados
